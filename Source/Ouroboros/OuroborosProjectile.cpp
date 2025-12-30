@@ -29,6 +29,10 @@ AOuroborosProjectile::AOuroborosProjectile()
 
 	// Die after 3 seconds by default
 	InitialLifeSpan = 3.0f;
+
+	bReplicates = true;
+	SetReplicateMovement(true);
+	bNetLoadOnClient = true;
 }
 
 void AOuroborosProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

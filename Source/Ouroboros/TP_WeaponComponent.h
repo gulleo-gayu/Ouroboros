@@ -54,6 +54,17 @@ protected:
 	UFUNCTION()
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	/** Server RPC to handle firing on server */
+	UFUNCTION(Server, Reliable)
+	void ServerFire(const FVector& SpawnLocation, const FRotator& SpawnRotation);
+
+	/** Multicast RPC to play fire effects on all clients except the shooter */
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayFireEffects(const FVector& Location);
+
+	/** Play fire effects locally (sound + animation) */
+	void PlayFireEffectsLocal();
+
 private:
 	/** The Character holding this weapon*/
 	AOuroborosCharacter* Character;
