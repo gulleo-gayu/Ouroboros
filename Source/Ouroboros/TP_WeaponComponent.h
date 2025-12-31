@@ -67,5 +67,6 @@ protected:
 
 private:
 	/** The Character holding this weapon*/
+	UPROPERTY()
 	AOuroborosCharacter* Character;
 };
