@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "OBPlayerState.h"
 #include "Engine/LocalPlayer.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -33,7 +34,6 @@ AOuroborosCharacter::AOuroborosCharacter()
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
-	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
 	bReplicates = true;
@@ -60,7 +60,13 @@ void AOuroborosCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AOuroborosCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AOuroborosCharacter::StopMoving);
 
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &AOuroborosCharacter::SprintStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AOuroborosCharacter::SprintEnd);
+
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AOuroborosCharacter::CrouchToggle);
+		
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AOuroborosCharacter::Look);
 	}
@@ -81,6 +87,8 @@ void AOuroborosCharacter::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
+
+		UpdatePostureState(true);
 	}
 }
 
@@ -95,4 +103,70 @@ void AOuroborosCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AOuroborosCharacter::StopMoving(const FInputActionValue& Value)
+{
+	UpdatePostureState(false);
+}
+
+void AOuroborosCharacter::SprintStart(const FInputActionValue& Value)
+{
+	bIsSprinting = true;
+
+	if (bIsCrouching == true)
+	{
+		bIsCrouching = false;
+	}
+	
+	UpdatePostureState(true);
+}
+
+void AOuroborosCharacter::SprintEnd(const FInputActionValue& Value)
+{
+	bIsSprinting = false;
+	if (GetVelocity().Size() > 0.1f)
+	{
+		UpdatePostureState(true);
+	}
+}
+
+void AOuroborosCharacter::CrouchToggle()
+{
+	bIsCrouching = !bIsCrouching;
+
+	if (bIsCrouching == true)
+	{
+		ACharacter::Crouch();
+	}
+	else
+	{
+		ACharacter::UnCrouch();
+	}
+
+	UpdatePostureState(GetVelocity().Size() > 0.1f);
+}
+
+void AOuroborosCharacter::UpdatePostureState(bool bIsMoving)
+{
+	if (AOBPlayerState* OBPlayerState = GetPlayerState<AOBPlayerState>())
+	{
+		if (bIsSprinting == true && bIsMoving == true)
+		{
+			OBPlayerState->SetPlayerPosture(EPlayerPosture::Run);
+		}
+		else if ( bIsCrouching == true)
+		{
+			OBPlayerState->SetPlayerPosture(EPlayerPosture::Crouch);
+		}
+		else if ( bIsMoving == true)
+		{
+			OBPlayerState->SetPlayerPosture(EPlayerPosture::Walk);
+		}
+		else
+		{
+			OBPlayerState->SetPlayerPosture(EPlayerPosture::Idle);
+		}
+	}
+	
 }
