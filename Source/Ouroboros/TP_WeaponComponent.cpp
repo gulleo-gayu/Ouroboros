@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 
 #include "TP_WeaponComponent.h"
@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "OBPlayerState.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
@@ -25,10 +26,25 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 
 void UTP_WeaponComponent::Fire()
 {
-	if (Character == nullptr || Character->GetController() == nullptr)
+	// 캐릭터나 컨트롤러가 없거나, 공격 쿨타임 중이면 공격 불가
+	if (Character == nullptr || Character->GetController() == nullptr || bCanFire == false)
 	{
 		return;
 	}
+
+	// 장착 중인 무기가 active일때만 공격가능
+	if (this->GetOwner() -> IsHidden() == true || this->IsActive() == false)
+	{
+		return;
+	}
+
+	// 캐릭터 변수를 통해 플레이어 스테이트에 접근해서 상태 변환
+	if (AOBPlayerState* PlayerState = Character->GetPlayerState<AOBPlayerState>())
+	{
+		PlayerState->SetPlayerAction(EPlayerAction::Attack);
+	}
+	
+	bCanFire = false;
 
 	APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
 	if (PlayerController == nullptr)
@@ -40,8 +56,10 @@ void UTP_WeaponComponent::Fire()
 	const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
 
 	ServerFire(SpawnLocation, SpawnRotation);
-
 	PlayFireEffectsLocal();
+
+	GetWorld()->GetTimerManager().SetTimer(FireTimerHandle, this, &UTP_WeaponComponent::ResetFire, FireDelay, false);
+	
 	//if (Character == nullptr || Character->GetController() == nullptr)
 	//{
 	//	return;
@@ -85,10 +103,20 @@ void UTP_WeaponComponent::Fire()
 	//}
 }
 
+void UTP_WeaponComponent::ResetFire()
+{
+	bCanFire = true;
+	AOBPlayerState* PlayerState = Character->GetPlayerState<AOBPlayerState>();
+	if ( PlayerState->GetPlayerAction() == EPlayerAction::Attack)
+	{
+		PlayerState->SetPlayerAction(EPlayerAction::None);
+	}
+}
+
 void UTP_WeaponComponent::ServerFire_Implementation(const FVector& SpawnLocation, const FRotator& SpawnRotation)
 {
 	UE_LOG(LogTemp, Warning, TEXT("ServerFire_Implementation: %s"), *GetNameSafe(Character));
-	// �߻�ü ����
+	// �߻�ü ����
 	if (ProjectileClass != nullptr)
 	{
 		UWorld* const World = GetWorld();
@@ -119,13 +147,13 @@ void UTP_WeaponComponent::PlayFireEffectsLocal()
 		return;
 	}
 
-	// ����
+	// ����
 	if (FireSound != nullptr)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
 	}
 
-	// �ִϸ��̼�
+	// �ִϸ��̼�
 	if (FireAnimation != nullptr)
 	{
 		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();

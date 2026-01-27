@@ -38,6 +38,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputAction* FireAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FireDelay = 0.5f;
+	bool bCanFire = true;
+	FTimerHandle FireTimerHandle;
+	
 	/** Sets default values for this component's properties */
 	UTP_WeaponComponent();
 
@@ -48,6 +53,7 @@ public:
 	/** Make the weapon Fire a Projectile */
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void Fire();
+	void ResetFire();
 
 protected:
 	/** Ends gameplay for this component. */

@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OuroborosProjectile.h"
+
+#include "OBPlayerState.h"
+#include "OuroborosCharacter.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 
@@ -44,4 +47,17 @@ void AOuroborosProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActo
 
 		Destroy();
 	}
+
+	if (HasAuthority() == true && OtherActor != GetOwner())
+	{
+		if (AOuroborosCharacter* HitCharacter = Cast<AOuroborosCharacter>(OtherActor))
+		{
+			if (AOBPlayerState* PlayerState = HitCharacter->GetPlayerState<AOBPlayerState>())
+			{
+				PlayerState->SetPlayerAction(EPlayerAction::Hit);
+				Destroy();
+			}
+		}
+	}
+	
 }

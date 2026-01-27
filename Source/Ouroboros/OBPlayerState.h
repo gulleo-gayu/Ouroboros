@@ -12,8 +12,8 @@ UENUM(BlueprintType)
 enum class EPlayerPhase : uint8
 {
 	None,
-	Attacker,
-	Defender,
+	Offense,
+	Defense,
 };
 
 UENUM(BlueprintType)
@@ -50,13 +50,37 @@ public:
 	EPlayerPosture GetPlayerPosture() const { return CurrentPosture; }
 	EPlayerAction GetPlayerAction() const { return CurrentAction;}
 	
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayerState")
 	EPlayerPosture CurrentPosture = EPlayerPosture::Idle;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayerState")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentAction, Category = "PlayerState")
 	EPlayerAction CurrentAction = EPlayerAction::None;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayerState")
+	EPlayerPhase CurrentPhase = EPlayerPhase::None;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> AttackerWeaponClass;
+	
+	UPROPERTY()
+	AActor* CurrentWeaponActor;
+
+	UPROPERTY(EditAnywhere)
+	float HitDuration = 0.5f;
+
+	FTimerHandle HitResetTimerHandle;
+
+	UFUNCTION()
+	void OnRep_CurrentAction();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UFUNCTION(BlueprintCallable)
+	void OnOffensePhaseEnter();
+	UFUNCTION(BlueprintCallable)
+	void OnDefensePhaseEnter();
+	
 	void OnIdleStateEnter();
 	void OnWalkStateEnter();
 	void OnRunStateEnter();
@@ -67,6 +91,8 @@ protected:
 	void OnAttackStateEnter();
 	void OnHitStateEnter();
 	void OnInteractStateEnter();
+
+	void ResetHitState();
 private:
 
 };
