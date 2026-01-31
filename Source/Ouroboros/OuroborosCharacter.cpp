@@ -112,14 +112,12 @@ void AOuroborosCharacter::StopMoving(const FInputActionValue& Value)
 
 void AOuroborosCharacter::SprintStart(const FInputActionValue& Value)
 {
-	bIsSprinting = true;
-
-	if (bIsCrouching == true)
+	// 일어서기에 성공했을때만 달리기로 전환 (기존에 일어나 있었으면 성공 취급)
+	if ( TryUnCrouch() == true)
 	{
-		bIsCrouching = false;
+		bIsSprinting = true;
+		UpdatePostureState(true);
 	}
-	
-	UpdatePostureState(true);
 }
 
 void AOuroborosCharacter::SprintEnd(const FInputActionValue& Value)
@@ -133,18 +131,64 @@ void AOuroborosCharacter::SprintEnd(const FInputActionValue& Value)
 
 void AOuroborosCharacter::CrouchToggle()
 {
-	bIsCrouching = !bIsCrouching;
-
-	if (bIsCrouching == true)
+	if (bIsCrouching == true)			// 현재 앉아있는 상태에서 일어나려고 할때
 	{
-		ACharacter::Crouch();
+		TryUnCrouch();
 	}
-	else
+	else								// 서 있는 상태에서 앉으려고 할 때
 	{
-		ACharacter::UnCrouch();
+		bIsCrouching = true;
+		ACharacter::Crouch();
 	}
 
 	UpdatePostureState(GetVelocity().Size() > 0.1f);
+}
+
+// 서있을 때의 캡슐콜라이더를 생성, 충돌을 검사하여 장애물이 존재하면 false를 반환하는 함수
+bool AOuroborosCharacter::HasSpaceToStand()
+{
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	FCollisionQueryParams QueryParams;
+	
+	float StandingCapuleHalfHeight = GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	float CrouchingCapsuleHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
+	float CapsuleRadius = Capsule->GetUnscaledCapsuleRadius();
+	float CenterOffset = StandingCapuleHalfHeight - CrouchingCapsuleHalfHeight;
+
+	FVector Start = GetActorLocation() + FVector(0.f, 0.f, CenterOffset);
+	FVector End = Start;
+	FQuat Rotation = GetActorQuat();
+	QueryParams.AddIgnoredActor(this);
+
+	FHitResult HitOut;
+	bool bObstacleExsit = GetWorld()->SweepSingleByChannel( HitOut, Start, End, Rotation, ECC_Visibility, FCollisionShape::MakeCapsule(CapsuleRadius, StandingCapuleHalfHeight), QueryParams);
+
+	if (bObstacleExsit == true)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+// 일어서기를 실행하고 성공 여부를 반환하는 함수
+bool AOuroborosCharacter::TryUnCrouch()
+{
+	if (bIsCrouching == false)
+	{
+		return true;
+	}
+
+	if (HasSpaceToStand() == true)
+	{
+		bIsCrouching = false;
+		ACharacter::UnCrouch();
+		return true;
+	}
+
+	return false;
 }
 
 void AOuroborosCharacter::UpdatePostureState(bool bIsMoving)
