@@ -67,6 +67,8 @@ protected:
 	void SprintStart(const FInputActionValue& Value);
 	void SprintEnd(const FInputActionValue& Value);
 	void CrouchToggle();
+	bool HasSpaceToStand();
+	bool TryUnCrouch();
 
 	void UpdatePostureState(bool bIsMoving);
 	// APawn interface
