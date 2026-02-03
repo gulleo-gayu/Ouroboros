@@ -44,6 +44,9 @@ void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch, FStr
 		MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 		MultiplayerSessionsSubsystem->MultiplayerOnStartSessionComplete.AddDynamic(this, &ThisClass::OnStartSession);
 	}
+
+
+
 }
 
 bool UMenu::Initialize()
@@ -121,7 +124,7 @@ void UMenu::OnFindSessions(const TArray<FOnlineSessionSearchResult>& SessionResu
 
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	/*IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
 	if (Subsystem)
 	{
 		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
@@ -136,7 +139,16 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 				PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 			}
 		}
+	}*/
+
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Join failed"));
+		}
 	}
+
 }
 
 void UMenu::OnDestroySession(bool bWasSuccessful)
