@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Interfaces/OnlineExternalUIInterface.h"
+#include "OnlineSessionSettings.h" 
 
 #include "MultiplayerSessionsSubsystem.generated.h"
 
@@ -18,7 +20,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnDestroySessionComplete
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnStartSessionComplete, bool, bWasSuccessful);
 
 /**
- * 
+ *
  */
 UCLASS()
 class MULTIPLAYERSESSIONS_API UMultiplayerSessionsSubsystem : public UGameInstanceSubsystem
@@ -30,13 +32,27 @@ public:
 	//
 	// To handle session functionality. The Menu class will call these
 	//
+	UFUNCTION(BlueprintCallable, Category = "Multiplayer|Sessions")
 	void CreateSession(int32 NumPublicConnections, FString MatchType);
+
 	void FindSessions(int32 MaxSearchResults);
 	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
 	void DestroySession();
 	void StartSession();
 
 	bool IsValidSessionInterface();
+
+	// 스팀 오버레이 초대 UI
+	UFUNCTION(BlueprintCallable, Category = "Multiplayer|Sessions")
+	void ShowInviteUI();
+
+	UFUNCTION(BlueprintCallable, Category = "Multiplayer|Sessions")
+	void StartGame(FString GameMapPathOverride = TEXT(""));
+
+
+
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
 	//
 	// Our own custom delegates for the Menu class to bind callbacks to
@@ -59,6 +75,14 @@ protected:
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 
+	//초대 수락 콜백
+	void OnSessionUserInviteAccepted(
+		bool bWasSuccessful,
+		int32 ControllerId,
+		TSharedPtr<const FUniqueNetId> UserId,
+		const FOnlineSessionSearchResult& InviteResult
+	);
+
 private:
 	IOnlineSessionPtr SessionInterface;
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
@@ -79,7 +103,21 @@ private:
 	FOnStartSessionCompleteDelegate StartSessionCompleteDelegate;
 	FDelegateHandle StartSessionCompleteDelegateHandle;
 
+	//초대 수락 델리게이트
+	FOnSessionUserInviteAcceptedDelegate SessionUserInviteAcceptedDelegate;
+	FDelegateHandle SessionUserInviteAcceptedDelegateHandle;
+
 	bool bCreateSessionOnDestroy{ false };
 	int32 LastNumPublicConnections;
 	FString LastMatchType;
+
+	FString LobbyMapPath = TEXT("/Game/Lobby/Maps/L_Lobby");
+
+	bool bJoinAfterDestroy = false;
+	FOnlineSessionSearchResult PendingInviteResult;
+
+	bool bTravelOnStartSession = false;
+	FString GameMapPath = TEXT("/Game/FirstPersion/Maps/FirstPersionMap");
+	FString PendingTravelPath;
+
 };
