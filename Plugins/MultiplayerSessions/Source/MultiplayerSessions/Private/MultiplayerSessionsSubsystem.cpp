@@ -313,7 +313,8 @@ void UMultiplayerSessionsSubsystem::OnStartSessionComplete(FName SessionName, bo
 		if (UWorld* World = GetWorld())
 		{
 	
-			World->ServerTravel(PendingTravelPath + TEXT("?listen"));
+			World->ServerTravel(PendingTravelPath);
+			// + TEXT("?listen")
 		}
 	}
 	MultiplayerOnStartSessionComplete.Broadcast(bWasSuccessful);
