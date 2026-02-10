@@ -14,6 +14,8 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h" 
+#include "DrawDebugHelpers.h"
+#include "Component/OBHealthComponent.h"
 
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
@@ -52,10 +54,21 @@ void UTP_WeaponComponent::Fire()
 		return;
 	}
 
-	const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
+	/*const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
 	const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
 
-	ServerFire(SpawnLocation, SpawnRotation);
+	ServerFire(SpawnLocation, SpawnRotation);*/
+
+	FVector CamLoc;
+	FRotator CamRot;
+	PlayerController->GetPlayerViewPoint(CamLoc, CamRot);
+
+	const FVector Start = CamLoc;
+	const float Range = 10000.f; // 사거리
+	const FVector End = Start + (CamRot.Vector() * Range);
+
+	ServerFire(Start, End);
+
 	PlayFireEffectsLocal();
 
 	GetWorld()->GetTimerManager().SetTimer(FireTimerHandle, this, &UTP_WeaponComponent::ResetFire, FireDelay, false);
@@ -113,11 +126,11 @@ void UTP_WeaponComponent::ResetFire()
 	}
 }
 
-void UTP_WeaponComponent::ServerFire_Implementation(const FVector& SpawnLocation, const FRotator& SpawnRotation)
+void UTP_WeaponComponent::ServerFire_Implementation(const FVector& Start, const FVector& End)
 {
 	UE_LOG(LogTemp, Warning, TEXT("ServerFire_Implementation: %s"), *GetNameSafe(Character));
 	// �߻�ü ����
-	if (ProjectileClass != nullptr)
+	/*if (ProjectileClass != nullptr)
 	{
 		UWorld* const World = GetWorld();
 		if (World != nullptr)
@@ -126,6 +139,67 @@ void UTP_WeaponComponent::ServerFire_Implementation(const FVector& SpawnLocation
 			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
 			World->SpawnActor<AOuroborosProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+		}
+	}*/
+
+	if (!Character) return;
+
+	FHitResult Hit;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(WeaponTrace), true);
+	Params.AddIgnoredActor(Character);
+	Params.AddIgnoredActor(GetOwner()); // 무기 액터 무시(필요 시)
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_Visibility,
+		Params
+	);
+
+	FVector DebugEnd = bHit ? Hit.ImpactPoint : End;
+
+	// 빨간 선(2초 유지)
+	DrawDebugLine(
+		GetWorld(),
+		Start,
+		DebugEnd,
+		FColor::Red,
+		false,   // persistent lines?
+		2.0f,    // life time
+		0,
+		1.5f     // thickness
+	);
+
+	if (bHit)
+	{
+		AActor* HitActor = Hit.GetActor();
+		UPrimitiveComponent* HitComp = Hit.GetComponent();
+
+		// 맞은 지점에 초록 점
+		DrawDebugPoint(
+			GetWorld(),
+			Hit.ImpactPoint,
+			12.0f,
+			FColor::Green,
+			false,
+			2.0f
+		);
+
+	
+
+		// 캐릭터 맞추면 PlayerState Hit 처리
+		if (AOuroborosCharacter* HitCharacter = Cast<AOuroborosCharacter>(HitActor))
+		{
+			if (UOBHealthComponent* HC = HitCharacter->FindComponentByClass<UOBHealthComponent>())
+			{
+				HC->ApplyDamage_Internal(Damage); 
+			}
+
+			if (AOBPlayerState* PS = HitCharacter->GetPlayerState<AOBPlayerState>())
+			{
+				PS->SetPlayerAction(EPlayerAction::Hit);
+			}
 		}
 	}
 

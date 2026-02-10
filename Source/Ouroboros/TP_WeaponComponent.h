@@ -46,6 +46,10 @@ public:
 	/** Sets default values for this component's properties */
 	UTP_WeaponComponent();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon|Damage", meta = (ClampMin = "0.0"))
+	float Damage = 5.0f;
+
+
 	/** Attaches the actor to a FirstPersonCharacter */
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	bool AttachWeapon(AOuroborosCharacter* TargetCharacter);
@@ -62,7 +66,7 @@ protected:
 
 	/** Server RPC to handle firing on server */
 	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector& SpawnLocation, const FRotator& SpawnRotation);
+	void ServerFire(const FVector& Start, const FVector& End);
 
 	/** Multicast RPC to play fire effects on all clients except the shooter */
 	UFUNCTION(NetMulticast, Reliable)
