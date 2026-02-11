@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerState.h"
 #include "OBLobbyPlayerState.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnReadyChanged, bool /*bNewReady*/);
+
 /**
  * 
  */
@@ -18,14 +20,20 @@ public:
     UFUNCTION(BlueprintCallable)
     bool IsReady() const { return bReady; }
 
-    void SetReady(bool bInReady) { bReady = bInReady; }
+    void SetReady(bool bInReady);
+
+    FOnReadyChanged OnReadyChanged;
+
+
+ 
 
 protected:
-    UPROPERTY(ReplicatedUsing = OnRep_Ready)
+    UPROPERTY(ReplicatedUsing = OnRep_Ready, BlueprintReadOnly)
     bool bReady = false;
 
     UFUNCTION()
     void OnRep_Ready();
+
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
