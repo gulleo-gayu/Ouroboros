@@ -60,9 +60,13 @@ void AOBPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 void AOBPlayerState::OnOffensePhaseEnter()
 {
+	FString NetPrefix = HasAuthority() ? TEXT("Server") : TEXT("Client");
+	UE_LOG(LogTemp, Display, TEXT("[%s] OnOffensphaseEnter: 엔터들어옴"), *NetPrefix);
+	
 	APawn* MyPawn = GetPawn();
 	AOuroborosCharacter* MyCharacter = Cast<AOuroborosCharacter>(MyPawn);
 
+	// 1. 이미 무기가 생성되어 있다면 보이기만 함
 	if (CurrentWeaponActor != nullptr)
 	{
 		CurrentWeaponActor -> SetActorHiddenInGame(false);
