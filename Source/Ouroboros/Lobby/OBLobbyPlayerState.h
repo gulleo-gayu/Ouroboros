@@ -25,7 +25,7 @@ public:
     FOnReadyChanged OnReadyChanged;
 
 
- 
+
 
 protected:
     UPROPERTY(ReplicatedUsing = OnRep_Ready, BlueprintReadOnly)

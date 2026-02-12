@@ -1,13 +1,57 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "OBLobbyWidget.h"
 
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"               
+#include "Engine/Texture2D.h"  
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerController.h"
 #include "OBLobbyPlayerController.h"
+
+
+
+#if __has_include("steam/steam_api.h")
+#include "steam/steam_api.h"
+#define OB_HAS_STEAMWORKS 1
+#else
+#define OB_HAS_STEAMWORKS 0
+#endif
+
+
+// Steam ì´ë¯¸ì§€ í•¸ë“¤ -> UTexture2D ìƒì„±
+static UTexture2D* MakeTextureFromSteamImage(int ImageHandle)
+{
+#if OB_HAS_STEAMWORKS
+    if (ImageHandle <= 0) return nullptr;
+
+    uint32 W = 0, H = 0;
+    if (!SteamUtils()->GetImageSize(ImageHandle, &W, &H) || W == 0 || H == 0)
+        return nullptr;
+
+    TArray<uint8> RGBA;
+    RGBA.SetNumUninitialized(W * H * 4);
+
+    if (!SteamUtils()->GetImageRGBA(ImageHandle, RGBA.GetData(), RGBA.Num()))
+        return nullptr;
+
+    UTexture2D* Tex = UTexture2D::CreateTransient((int32)W, (int32)H, PF_R8G8B8A8);
+    if (!Tex) return nullptr;
+
+    Tex->SRGB = true;
+
+    void* MipData = Tex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+    FMemory::Memcpy(MipData, RGBA.GetData(), RGBA.Num());
+    Tex->GetPlatformData()->Mips[0].BulkData.Unlock();
+
+    Tex->UpdateResource();
+    return Tex;
+#else
+    return nullptr;
+#endif
+}
 
 void UOBLobbyWidget::NativeConstruct()
 {
@@ -19,7 +63,7 @@ void UOBLobbyWidget::NativeConstruct()
     if (ClientReadyButton)
         ClientReadyButton->OnClicked.AddDynamic(this, &UOBLobbyWidget::OnClientReadyButtonClicked);
 
-    // ÀÏ´Ü ÇÑ¹ø ½Ãµµ
+    // ì¼ë‹¨ í•œë²ˆ ì‹œë„
     TryBindPlayerStates();
 
   
@@ -42,6 +86,7 @@ void UOBLobbyWidget::NativeDestruct()
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(BindRetryTimer);
+        GetWorld()->GetTimerManager().ClearTimer(SteamDisplayRetryTimer);
     }
 
     if (HostPS)
@@ -60,7 +105,7 @@ void UOBLobbyWidget::TryBindPlayerStates()
     AGameStateBase* GS = GetWorld()->GetGameState();
     if (!GS) return;
 
-    // 2¸í ·Îºñ¶ó¸é º¸Åë PlayerArray[0]=Host, [1]=Client·Î °¡Á¤
+    // 2ëª… ë¡œë¹„ë¼ë©´ ë³´í†µ PlayerArray[0]=Host, [1]=Clientë¡œ ê°€ì •
     if (GS->PlayerArray.Num() >= 1 && !HostPS)
     {
         HostPS = Cast<AOBLobbyPlayerState>(GS->PlayerArray[0]);
@@ -79,12 +124,37 @@ void UOBLobbyWidget::TryBindPlayerStates()
         }
     }
 
-    UpdateReadyTexts();
-
-    // µÑ ´Ù ÀâÇûÀ¸¸é Å¸ÀÌ¸Ó ²ô±â
-    if (HostPS && ClientPS && GetWorld())
+    if (GS->PlayerArray.Num() < 2 && ClientPS)
     {
-        GetWorld()->GetTimerManager().ClearTimer(BindRetryTimer);
+        ClientPS->OnReadyChanged.RemoveAll(this);
+        ClientPS = nullptr;
+
+      
+        if (ClientNameText) ClientNameText->SetText(FText::FromString(TEXT("ëŒ€ê¸°ì¤‘...")));
+        ClientAvatarTex = nullptr;
+
+    }
+
+    UpdateReadyTexts();
+    UpdateInvitePanelVisibility();
+
+    if (HostPS && GetWorld())
+    {
+    
+
+        if (!GetWorld()->GetTimerManager().IsTimerActive(SteamDisplayRetryTimer))
+        {
+            SteamRetryCount = 0;
+            UpdateSteamDisplay();
+
+            GetWorld()->GetTimerManager().SetTimer(
+                SteamDisplayRetryTimer,
+                this,
+                &UOBLobbyWidget::UpdateSteamDisplay,
+                0.2f,
+                true
+            );
+        }
     }
 
   
@@ -105,6 +175,111 @@ void UOBLobbyWidget::UpdateReadyTexts()
     }
 }
 
+void UOBLobbyWidget::UpdateSteamDisplay()
+{
+#if !OB_HAS_STEAMWORKS
+    return;
+#else
+  
+    UE_LOG(LogTemp, Warning, TEXT("[SteamUI] IsSteamRunning=%d"), SteamAPI_IsSteamRunning() ? 1 : 0);
+
+    auto UpdateName = [](const FString& Id64, UTextBlock* Target)
+        {
+            if (!Target) return;
+            const uint64 Id = FCString::Strtoui64(*Id64, nullptr, 10);
+            if (Id == 0) return;
+
+            const CSteamID SteamID(Id);
+            SteamFriends()->RequestUserInformation(SteamID, true);
+
+            if (const char* Persona = SteamFriends()->GetFriendPersonaName(SteamID))
+                Target->SetText(FText::FromString(UTF8_TO_TCHAR(Persona)));
+        };
+
+    auto UpdateAvatar = [](const FString& Id64, UImage* TargetImage, UTexture2D*& CachedTex)
+        {
+            if (!TargetImage) return;
+            if (CachedTex) return;
+
+            const uint64 Id = FCString::Strtoui64(*Id64, nullptr, 10);
+            if (Id == 0) return;
+
+            const CSteamID SteamID(Id);
+            SteamFriends()->RequestUserInformation(SteamID, true);
+
+            const int Handle = SteamFriends()->GetLargeFriendAvatar(SteamID);
+            if (Handle <= 0) return;
+
+            CachedTex = MakeTextureFromSteamImage(Handle);
+            if (CachedTex)
+                TargetImage->SetBrushFromTexture(CachedTex, true);
+        };
+
+    // HostëŠ” í˜¼ìì—¬ë„ ê°±ì‹ 
+    if (HostPS)
+    {
+        FString HostId64;
+        if (GetSteamId64FromPS(HostPS, HostId64))
+        {
+            UpdateName(HostId64, HostNameText);
+            UpdateAvatar(HostId64, HostAvatarImage, HostAvatarTex);
+        }
+    }
+
+    // ClientëŠ” ë“¤ì–´ì™”ì„ ë•Œë§Œ ê°±ì‹  
+    if (ClientPS)
+    {
+        FString ClientId64;
+        if (GetSteamId64FromPS(ClientPS, ClientId64))
+        {
+            UpdateName(ClientId64, ClientNameText);
+            UpdateAvatar(ClientId64, ClientAvatarImage, ClientAvatarTex);
+        }
+    }
+
+    SteamRetryCount++;
+    const bool bHostDone = (HostAvatarTex != nullptr);
+    const bool bClientDone = (ClientPS == nullptr) ? true : (ClientAvatarTex != nullptr);
+
+    if ((bHostDone && bClientDone) || SteamRetryCount >= 30) // 10->30 ì¶”ì²œ
+    {
+        if (GetWorld())
+            GetWorld()->GetTimerManager().ClearTimer(SteamDisplayRetryTimer);
+    }
+#endif
+}
+
+
+
+bool UOBLobbyWidget::GetSteamId64FromPS(APlayerState* PS, FString& OutSteamId64) const
+{
+    if (!PS) return false;
+
+    const FUniqueNetIdRepl& Repl = PS->GetUniqueId();
+    TSharedPtr<const FUniqueNetId> NetId = Repl.GetUniqueNetId();
+    if (!NetId.IsValid()) return false;
+
+    OutSteamId64 = NetId->ToString(); // "7656...."
+    return !OutSteamId64.IsEmpty();
+}
+
+void UOBLobbyWidget::UpdateInvitePanelVisibility()
+{
+    if (!InvitePanel) return;
+
+    if (GetWorld() && GetWorld()->GetNetMode() == NM_Client)
+    {
+        InvitePanel->SetVisibility(ESlateVisibility::Collapsed);
+        return;
+    }
+
+    const bool bHasClient = (ClientPS != nullptr);
+    InvitePanel->SetVisibility(bHasClient ? ESlateVisibility::Collapsed
+        : ESlateVisibility::Visible);
+    ClientPanel->SetVisibility(bHasClient ? ESlateVisibility::Visible 
+        : ESlateVisibility::Collapsed);
+}
+
 void UOBLobbyWidget::OnHostReadyChanged(bool /*bIsReady*/)
 {
     UpdateReadyTexts();
@@ -117,7 +292,7 @@ void UOBLobbyWidget::OnClientReadyChanged(bool /*bIsReady*/)
 
 void UOBLobbyWidget::OnHostReadyButtonClicked()
 {
-    // ¹öÆ°Àº host¸¸ È°¼ºÈ­µÅÀÖ°Ô ÇØ³ùÀ¸´Ï ±×³É ³» ÄÁÆ®·Ñ·¯ ToggleReady È£Ãâ
+    // ë²„íŠ¼ì€ hostë§Œ í™œì„±í™”ë¼ìˆê²Œ í•´ë†¨ìœ¼ë‹ˆ ê·¸ëƒ¥ ë‚´ ì»¨íŠ¸ë¡¤ëŸ¬ ToggleReady í˜¸ì¶œ
     if (AOBLobbyPlayerController* PC = Cast<AOBLobbyPlayerController>(GetOwningPlayer()))
     {
         PC->ToggleReady();

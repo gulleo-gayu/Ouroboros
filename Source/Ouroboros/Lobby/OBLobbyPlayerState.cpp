@@ -19,7 +19,6 @@ void AOBLobbyPlayerState::SetReady(bool bInReady)
     ForceNetUpdate();
 }
 
-
 void AOBLobbyPlayerState::OnRep_Ready()
 {
 	OnReadyChanged.Broadcast(bReady);

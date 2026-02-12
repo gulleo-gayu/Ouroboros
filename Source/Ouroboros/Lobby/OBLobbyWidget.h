@@ -9,7 +9,9 @@
 
 class UButton;
 class UTextBlock;
-
+class UImage;           
+class UTexture2D;
+class UWidget;
 /**
  * 
  */
@@ -24,6 +26,11 @@ protected:
 
     void TryBindPlayerStates();
     void UpdateReadyTexts();
+
+    void UpdateSteamDisplay();
+    bool GetSteamId64FromPS(APlayerState* PS, FString& OutSteamId64) const;
+
+    void UpdateInvitePanelVisibility();
 
     UFUNCTION()
     void OnHostReadyChanged(bool bIsReady);
@@ -49,6 +56,23 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ClientReadyText;
 
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* HostNameText;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* ClientNameText;
+
+    UPROPERTY(meta = (BindWidget))
+    UImage* HostAvatarImage;
+
+    UPROPERTY(meta = (BindWidget))
+    UImage* ClientAvatarImage;
+
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Lobby", meta = (AllowPrivateAccess = "true"))
+    UWidget* InvitePanel;
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Lobby", meta = (AllowPrivateAccess = "true"))
+    UWidget* ClientPanel;
+
 private:
     UPROPERTY()
     AOBLobbyPlayerState* HostPS = nullptr;
@@ -57,4 +81,15 @@ private:
     AOBLobbyPlayerState* ClientPS = nullptr;
 
     FTimerHandle BindRetryTimer;
+
+    FTimerHandle SteamDisplayRetryTimer;
+
+    // 캐시(중복 생성 방지)
+    UPROPERTY()
+    UTexture2D* HostAvatarTex = nullptr;
+
+    UPROPERTY()
+    UTexture2D* ClientAvatarTex = nullptr;
+
+    int32 SteamRetryCount = 0;
 };
