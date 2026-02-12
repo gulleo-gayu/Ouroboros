@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Net/UnrealNetwork.h" 
 #include "OuroborosCharacter.generated.h"
 
 class UInputComponent;
@@ -46,6 +47,17 @@ class AOuroborosCharacter : public ACharacter
 public:
 	AOuroborosCharacter();
 		
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Death")
+	bool bIsDead = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Death")
+	void FinishDeath(); 
+
+	UFUNCTION(Server, Reliable)
+	void ServerFinishDeath();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;

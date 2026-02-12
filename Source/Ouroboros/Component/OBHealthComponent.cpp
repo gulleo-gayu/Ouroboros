@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#include "Ouroboros/OuroborosCharacter.h"
 #include "OBHealthComponent.h"
 
 void UOBHealthComponent::ServerApplyDamage_Implementation(float Amount)
@@ -21,6 +21,16 @@ void UOBHealthComponent::ApplyDamage_Internal(float Amount)
     OnHPChanged.Broadcast(CurrentHP, MaxHP); // 서버에서도 갱신(서버 UI/로그용)
 
     // 죽음 처리 필요하면 여기서
+    if (!bDeathHandled && CurrentHP <= 0.f)
+    {
+        bDeathHandled = true;
+
+        if (AOuroborosCharacter* Char = Cast<AOuroborosCharacter>(GetOwner()))
+        {
+            Char->bIsDead = true; // ? Replicated → 모든 클라 AnimBP가 Dead로 전환
+            Char->FinishDeath();
+        }
+    }
 }
 
 void UOBHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
