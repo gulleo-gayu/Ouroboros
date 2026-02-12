@@ -11,7 +11,7 @@
 #include "InputActionValue.h"
 #include "OBPlayerState.h"
 #include "Engine/LocalPlayer.h"
-
+#include "GameFramework/CharacterMovementComponent.h"
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
@@ -39,6 +39,37 @@ AOuroborosCharacter::AOuroborosCharacter()
 	bReplicates = true;
 	SetReplicateMovement(true);
 	bNetLoadOnClient = true;
+}
+
+void AOuroborosCharacter::FinishDeath()
+{
+	if (!HasAuthority())
+	{
+		ServerFinishDeath();
+		return;
+	}
+
+	ServerFinishDeath();
+}
+
+void AOuroborosCharacter::ServerFinishDeath_Implementation()
+{
+	// 여기서 “진짜 죽음 마무리”
+	DetachFromControllerPendingDestroy();
+
+	if (UCapsuleComponent* Cap = GetCapsuleComponent())
+		Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (UCharacterMovementComponent* Move = GetCharacterMovement())
+		Move->DisableMovement();
+
+	SetLifeSpan(5.f);
+}
+
+void AOuroborosCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AOuroborosCharacter, bIsDead);
 }
 
 void AOuroborosCharacter::BeginPlay()

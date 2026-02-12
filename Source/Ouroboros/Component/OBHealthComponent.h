@@ -38,4 +38,7 @@ public:
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 		
+private:
+    bool bDeathHandled = false;
+
 };
