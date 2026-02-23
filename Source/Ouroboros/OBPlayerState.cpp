@@ -91,6 +91,7 @@ void AOBPlayerState::OnOffensePhaseEnter()
 			if (WeaponComponent != nullptr)
 			{
 				WeaponComponent->AttachWeapon(MyCharacter);
+				WeaponComponent->SetActive(true);
 				UE_LOG(LogTemp, Display, TEXT("Offense Phase"));
 			}
 		}

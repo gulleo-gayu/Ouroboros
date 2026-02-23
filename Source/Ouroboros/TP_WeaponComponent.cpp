@@ -228,14 +228,14 @@ void UTP_WeaponComponent::PlayFireEffectsLocal()
 	}
 
 	// �ִϸ��̼�
-	if (FireAnimation != nullptr)
-	{
-		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
-		if (AnimInstance != nullptr)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
-	}
+	// if (FireAnimation != nullptr)
+	// {
+	// 	UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
+	// 	if (AnimInstance != nullptr)
+	// 	{
+	// 		AnimInstance->Montage_Play(FireAnimation, 1.f);
+	// 	}
+	// }
 }
 
 
