@@ -187,15 +187,23 @@ void UMultiplayerSessionsSubsystem::ShowInviteUI()
 void UMultiplayerSessionsSubsystem::StartGame(FString GameMapPathOverride)
 {
 	UWorld* World = GetWorld();
-	if (!World) return;
-
-	if (World->GetNetMode() == NM_Client)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("StartGame called on client - ignored"));
-		return;
-	}
+	if (!World || World->GetNetMode() == NM_Client) return;
 
 	PendingTravelPath = GameMapPathOverride.IsEmpty() ? GameMapPath : GameMapPathOverride;
+
+	if (SessionInterface.IsValid())
+	{
+		const EOnlineSessionState::Type State = SessionInterface->GetSessionState(NAME_GameSession);
+
+		// 이미 InProgress면 StartSession 하지 말고 바로 트래블
+		if (State == EOnlineSessionState::InProgress)
+		{
+			World->ServerTravel(PendingTravelPath);
+			return;
+		}
+	}
+
+
 	bTravelOnStartSession = true;
 
 	StartSession();

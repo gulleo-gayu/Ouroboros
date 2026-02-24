@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Blueprint/UserWidget.h"
 #include "OuroborosPlayerController.generated.h"
 
 class UInputMappingContext;
-
+class ULevelSequence;
+class ULevelSequencePlayer;
+class ALevelSequenceActor;
 /**
  *
  */
@@ -26,6 +29,47 @@ protected:
 protected:
 
 	virtual void BeginPlay() override;
+
+public:
+	// true=승리, false=패배
+	UFUNCTION(Client, Reliable)
+	void ClientPlayMatchCutscene(bool bWin);
+
+	UFUNCTION(Server, Reliable)
+	void ServerNotifyCutsceneFinished();
+
+	UFUNCTION()
+	void OnCutsceneFinished();
+
+	void HideHPWidget();
+	void ShowBlackScreen();
+
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> HUDWidgetClass;   // BP 위젯 클래스 지정용
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> HUDWidgetInstance; // 실제 생성된 위젯 인스턴스
+
+
+	// 에디터에서 지정(Win/Lose 시퀀스)
+	UPROPERTY(EditDefaultsOnly, Category = "Cutscene")
+	TObjectPtr<ULevelSequence> WinSequence;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Cutscene")
+	TObjectPtr<ULevelSequence> LoseSequence;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> BlackScreenClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> BlackScreenWidget;
+
+	UPROPERTY()
+	TObjectPtr<ULevelSequencePlayer> ActiveSequencePlayer;
+
+	UPROPERTY()
+	TObjectPtr<ALevelSequenceActor> ActiveSequenceActor;
 
 	// End Actor interface
 };
