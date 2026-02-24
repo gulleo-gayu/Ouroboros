@@ -117,7 +117,7 @@ private:
 	FOnlineSessionSearchResult PendingInviteResult;
 
 	bool bTravelOnStartSession = false;
-	FString GameMapPath = TEXT("/Game/FirstPerson/Maps/FirstPersonMap");
+	FString GameMapPath = TEXT("/Game/Maps/InGame");
 	FString PendingTravelPath;
 
 };
