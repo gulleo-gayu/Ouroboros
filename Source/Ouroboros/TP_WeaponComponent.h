@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "TP_WeaponComponent.generated.h"
 
 class AOuroborosCharacter;
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class OUROBOROS_API UTP_WeaponComponent : public USkeletalMeshComponent
+class OUROBOROS_API UTP_WeaponComponent : public UStaticMeshComponent
 {
 	GENERATED_BODY()
 
