@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Ouroboros/OuroborosCharacter.h"
+#include "Ouroboros/OuroborosGameMode.h"
 #include "OBHealthComponent.h"
 
 void UOBHealthComponent::ServerApplyDamage_Implementation(float Amount)
@@ -27,7 +28,17 @@ void UOBHealthComponent::ApplyDamage_Internal(float Amount)
 
         if (AOuroborosCharacter* Char = Cast<AOuroborosCharacter>(GetOwner()))
         {
-            Char->bIsDead = true; // ? Replicated → 모든 클라 AnimBP가 Dead로 전환
+            // 1) 누가 죽었는지(컨트롤러) 먼저 확보
+            AController* DeadController = Char->GetController();
+
+            // 2) 승패 결정/컷신 트리거는 서버 GameMode가
+            if (AOuroborosGameMode* GM = GetWorld()->GetAuthGameMode<AOuroborosGameMode>())
+            {
+                GM->NotifyPlayerDied(DeadController);
+            }
+
+            // 3) 캐릭터 죽음 처리(충돌/이동/Detach)
+            Char->bIsDead = true;
             Char->FinishDeath();
         }
     }
