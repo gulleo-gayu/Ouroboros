@@ -26,9 +26,12 @@ void AOuroborosPlayerController::BeginPlay()
 	if (IsLocalController() && HUDWidgetClass)
 	{
 		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-		if (HUDWidgetInstance)
+		HUDTurnWidgetInstance = CreateWidget<UUserWidget>(this, HUDTurnWidgetClass);\
+
+		if (HUDWidgetInstance && HUDTurnWidgetInstance)
 		{
 			HUDWidgetInstance->AddToViewport();
+			HUDTurnWidgetInstance->AddToViewport();
 	
 		}
 	}
@@ -45,10 +48,11 @@ void AOuroborosPlayerController::OnCutsceneFinished()
 
 void AOuroborosPlayerController::HideHPWidget()
 {
-	if (HUDWidgetInstance)
+	if (HUDWidgetInstance && HUDTurnWidgetInstance)
 	{
 
 		HUDWidgetInstance->RemoveFromParent();
+		HUDTurnWidgetInstance->RemoveFromParent();
 	
 
 		// HUDWidgetInstance->SetVisibility(ESlateVisibility::Collapsed);
