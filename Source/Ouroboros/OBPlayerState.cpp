@@ -2,12 +2,15 @@
 
 #include "OuroborosCharacter.h"
 #include "TP_WeaponComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 AOBPlayerState::AOBPlayerState()
 {
 	CurrentAction = EPlayerAction::None;
 	CurrentPosture = EPlayerPosture::Idle;
+
+	NetUpdateFrequency = 20.0f;
 }
 
 void AOBPlayerState::SetPlayerPosture(EPlayerPosture NewPosture)
@@ -165,6 +168,12 @@ void AOBPlayerState::OnNoneStateEnter()
 	{
 		UE_LOG(LogTemp, Display, TEXT("[%s] player %d: OnNoneStateEnter"), *NetPrefix, GetPlayerId());
 	}
+	
+	//다시 원래 색으로 복구!
+	if (AOuroborosCharacter* MyCharacter = Cast<AOuroborosCharacter>(GetPawn()))
+	{
+		MyCharacter->SetHitColor(false);
+	}
 }
 
 void AOBPlayerState::OnAttackStateEnter()
@@ -179,9 +188,26 @@ void AOBPlayerState::OnAttackStateEnter()
 void AOBPlayerState::OnHitStateEnter()
 {
 	FString NetPrefix = HasAuthority() ? TEXT("Server") : TEXT("Client");
+
+	if (APawn* MyPawn = GetPawn())
+	{
+		// 피격음 재생
+		if ( HitSound != nullptr)
+		{
+			FVector SoundLocation = MyPawn->GetActorLocation(); 
+			UGameplayStatics::PlaySoundAtLocation(this, HitSound, SoundLocation, 1.0f, 1.0f, 0.0f);
+		}
+		//  캐릭터를 빨간색으로 변경
+		if (AOuroborosCharacter* MyCharacter = Cast<AOuroborosCharacter>(MyPawn))
+		{
+			MyCharacter->SetHitColor(true); 
+		}
+	}
+	
 	if ( HasAuthority() == true)
 	{
 		UE_LOG(LogTemp, Display, TEXT("[%s] player %d: OnHitStateEnter"), *NetPrefix, GetPlayerId());
+
 	}
 
 	if ( HasAuthority() == true && GetWorld()->GetTimerManager().IsTimerActive(HitResetTimerHandle) == false)

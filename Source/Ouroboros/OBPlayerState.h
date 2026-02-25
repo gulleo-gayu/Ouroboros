@@ -44,6 +44,10 @@ public:
 	// Sets default values for this actor's properties
 	AOBPlayerState();
 
+	// 에디터에서 할당할 기본 발소리 큐
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	USoundBase* HitSound;
+	
 	void SetPlayerPosture(EPlayerPosture NewPosture);
 	void SetPlayerAction(EPlayerAction NewAction);
 

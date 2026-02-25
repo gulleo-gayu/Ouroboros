@@ -61,6 +61,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	void PlayFootstepSound();
 
+	void SetHitColor(bool bIsHit);
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
@@ -81,6 +83,10 @@ protected:
 	// 거리에 따라 소리가 줄어들게 만드는 감쇠 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	USoundAttenuation* FootstepAttenuation;
+
+	// 캐릭터를 구성하는 매터리얼을 담을 배열
+	UPROPERTY()
+	TArray<UMaterialInstanceDynamic*> DynamicMatInstances;
 	
 	virtual void BeginPlay();
 	void Move(const FInputActionValue& Value);

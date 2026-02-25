@@ -83,10 +83,44 @@ void AOuroborosCharacter::PlayFootstepSound()
 	}
 }
 
+void AOuroborosCharacter::SetHitColor(bool bIsHit)
+{
+	FLinearColor TargetColor;
+	if (bIsHit == true)
+	{
+		TargetColor = FLinearColor::Red;
+	}
+	else
+	{
+		TargetColor = FLinearColor::White;
+	}
+
+	for (UMaterialInstanceDynamic* DynamicMat : DynamicMatInstances)
+	{
+		if (DynamicMat)
+		{
+			DynamicMat->SetVectorParameterValue(FName("HitColor"), TargetColor);
+		}
+	}
+}
+
 void AOuroborosCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	int32 NumMaterials = GetMesh() -> GetNumMaterials();
+	for (int32 i = 0; i < NumMaterials; ++i)
+	{
+		UMaterialInterface* Mat = GetMesh()->GetMaterial(i);
+		if (Mat)
+		{
+			UMaterialInstanceDynamic* DynamicMat = UMaterialInstanceDynamic::Create(Mat, this);
+			DynamicMatInstances.Add(DynamicMat);
+			GetMesh()->SetMaterial(i, DynamicMat);
+		}
+		
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
