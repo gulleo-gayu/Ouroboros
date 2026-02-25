@@ -1,8 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
+#include "OBHealthComponent.h"
 #include "Ouroboros/OuroborosCharacter.h"
 #include "Ouroboros/OuroborosGameMode.h"
-#include "OBHealthComponent.h"
 
 void UOBHealthComponent::ServerApplyDamage_Implementation(float Amount)
 {
@@ -19,25 +19,25 @@ void UOBHealthComponent::ApplyDamage_Internal(float Amount)
     if (!GetOwner()->HasAuthority()) return;
 
     CurrentHP = FMath::Clamp(CurrentHP - Amount, 0.f, MaxHP);
-    OnHPChanged.Broadcast(CurrentHP, MaxHP); // ¼­¹ö¿¡¼­µµ °»½Å(¼­¹ö UI/·Î±×¿ë)
+    OnHPChanged.Broadcast(CurrentHP, MaxHP); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ UI/ï¿½Î±×¿ï¿½)
 
-    // Á×À½ Ã³¸® ÇÊ¿äÇÏ¸é ¿©±â¼­
+    // ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½â¼­
     if (!bDeathHandled && CurrentHP <= 0.f)
     {
         bDeathHandled = true;
 
         if (AOuroborosCharacter* Char = Cast<AOuroborosCharacter>(GetOwner()))
         {
-            // 1) ´©°¡ Á×¾ú´ÂÁö(ÄÁÆ®·Ñ·¯) ¸ÕÀú È®º¸
+            // 1) ï¿½ï¿½ï¿½ï¿½ ï¿½×¾ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½Æ®ï¿½Ñ·ï¿½) ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
             AController* DeadController = Char->GetController();
 
-            // 2) ½ÂÆÐ °áÁ¤/ÄÆ½Å Æ®¸®°Å´Â ¼­¹ö GameMode°¡
+            // 2) ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½Æ½ï¿½ Æ®ï¿½ï¿½ï¿½Å´ï¿½ ï¿½ï¿½ï¿½ï¿½ GameModeï¿½ï¿½
             if (AOuroborosGameMode* GM = GetWorld()->GetAuthGameMode<AOuroborosGameMode>())
             {
                 GM->NotifyPlayerDied(DeadController);
             }
 
-            // 3) Ä³¸¯ÅÍ Á×À½ Ã³¸®(Ãæµ¹/ÀÌµ¿/Detach)
+            // 3) Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½(ï¿½æµ¹/ï¿½Ìµï¿½/Detach)
             Char->bIsDead = true;
             Char->FinishDeath();
         }

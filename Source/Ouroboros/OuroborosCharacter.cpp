@@ -12,6 +12,7 @@
 #include "OBPlayerState.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
@@ -70,6 +71,16 @@ void AOuroborosCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOuroborosCharacter, bIsDead);
+}
+
+void AOuroborosCharacter::PlayFootstepSound()
+{
+	// 현재 로직: 기본 발소리 재생 (재질 구분 없음)
+	if (DefaultFootstepSound != nullptr)
+	{
+		FVector SoundLocation = GetActorLocation(); 
+		UGameplayStatics::PlaySoundAtLocation(this, DefaultFootstepSound, SoundLocation, 1.0f, 1.0f, 0.0f, FootstepAttenuation);
+	}
 }
 
 void AOuroborosCharacter::BeginPlay()

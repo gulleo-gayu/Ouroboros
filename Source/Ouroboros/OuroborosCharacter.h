@@ -58,6 +58,9 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void PlayFootstepSound();
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
@@ -71,8 +74,15 @@ protected:
 	bool bIsSprinting = false;
 	bool bIsCrouching = false;
 	
-	virtual void BeginPlay();
+	// 에디터에서 할당할 기본 발소리 큐
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	USoundBase* DefaultFootstepSound;
+
+	// 거리에 따라 소리가 줄어들게 만드는 감쇠 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	USoundAttenuation* FootstepAttenuation;
 	
+	virtual void BeginPlay();
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void StopMoving(const FInputActionValue& Value);
