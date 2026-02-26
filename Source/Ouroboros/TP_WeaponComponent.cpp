@@ -171,16 +171,16 @@ void UTP_WeaponComponent::ServerFire_Implementation(const FVector& Start, const 
 	FVector DebugEnd = bHit ? Hit.ImpactPoint : End;
 
 	// 빨간 선(2초 유지)
-	DrawDebugLine(
-		GetWorld(),
-		Start,
-		DebugEnd,
-		FColor::Red,
-		false,   // persistent lines?
-		2.0f,    // life time
-		0,
-		1.5f     // thickness
-	);
+	//DrawDebugLine(
+	//	GetWorld(),
+	//	Start,
+	//	DebugEnd,
+	//	FColor::Red,
+	//	false,   // persistent lines?
+	//	2.0f,    // life time
+	//	0,
+	//	1.5f     // thickness
+	//);
 
 	if (bHit)
 	{
@@ -188,14 +188,14 @@ void UTP_WeaponComponent::ServerFire_Implementation(const FVector& Start, const 
 		UPrimitiveComponent* HitComp = Hit.GetComponent();
 
 		// 맞은 지점에 초록 점
-		DrawDebugPoint(
+		/*DrawDebugPoint(
 			GetWorld(),
 			Hit.ImpactPoint,
 			12.0f,
 			FColor::Green,
 			false,
 			2.0f
-		);
+		);*/
 
 	
 
