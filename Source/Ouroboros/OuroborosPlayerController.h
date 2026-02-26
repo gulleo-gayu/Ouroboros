@@ -45,6 +45,10 @@ public:
 	
 	void ShowBlackScreen(bool bWin);
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bInCutscene = false;
+
+	FORCEINLINE bool IsInCutscene() const { return bInCutscene; }
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;   // BP 위젯 클래스 지정용

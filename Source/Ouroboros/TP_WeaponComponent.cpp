@@ -16,6 +16,7 @@
 #include "Net/UnrealNetwork.h" 
 #include "DrawDebugHelpers.h"
 #include "Component/OBHealthComponent.h"
+#include "OuroborosPlayerController.h"
 
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
@@ -28,6 +29,16 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 
 void UTP_WeaponComponent::Fire()
 {
+
+	APlayerController* PC = Cast<APlayerController>(Character->GetController());
+	if (AOuroborosPlayerController* OPC = Cast<AOuroborosPlayerController>(PC))
+	{
+		if (OPC->IsInCutscene())
+		{
+			return;
+		}
+	}
+
 	// 캐릭터나 컨트롤러가 없거나, 공격 쿨타임 중이면 공격 불가
 	if (Character == nullptr || Character->GetController() == nullptr || bCanFire == false)
 	{

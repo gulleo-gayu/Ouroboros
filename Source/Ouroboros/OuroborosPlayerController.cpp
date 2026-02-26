@@ -89,6 +89,7 @@ void AOuroborosPlayerController::ServerNotifyCutsceneFinished_Implementation()
 void AOuroborosPlayerController::ClientPlayMatchCutscene_Implementation(bool bWin)
 {
 	bLastCutsceneWasWin = bWin;
+	bInCutscene = true;
 
 	HideHPWidget();
 	SetIgnoreMoveInput(true);
