@@ -78,8 +78,9 @@ void AOuroborosCharacter::PlayFootstepSound()
 	// 현재 로직: 기본 발소리 재생 (재질 구분 없음)
 	if (DefaultFootstepSound != nullptr)
 	{
-		FVector SoundLocation = GetActorLocation(); 
-		UGameplayStatics::PlaySoundAtLocation(this, DefaultFootstepSound, SoundLocation, 1.0f, 1.0f, 0.0f, FootstepAttenuation);
+		FVector SoundLocation = GetActorLocation();
+		float finalVolume = IsLocallyControlled() ? LocalFootstepVolume : RemoteFootstepVolume;
+		UGameplayStatics::PlaySoundAtLocation(this, DefaultFootstepSound, SoundLocation, finalVolume, 1.0f, 0.0f, FootstepAttenuation);
 	}
 }
 
