@@ -42,7 +42,8 @@ public:
 	void OnCutsceneFinished();
 
 	void HideHPWidget();
-	void ShowBlackScreen();
+	
+	void ShowBlackScreen(bool bWin);
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -66,16 +67,26 @@ public:
 	TObjectPtr<ULevelSequence> LoseSequence;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UUserWidget> BlackScreenClass;
+	TSubclassOf<UUserWidget> WinBlackScreenClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LoseBlackScreenClass;
 
 	UPROPERTY()
-	TObjectPtr<UUserWidget> BlackScreenWidget;
+	TObjectPtr<UUserWidget> WinBlackScreenWidget;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoseBlackScreenWidget;
 
 	UPROPERTY()
 	TObjectPtr<ULevelSequencePlayer> ActiveSequencePlayer;
 
 	UPROPERTY()
 	TObjectPtr<ALevelSequenceActor> ActiveSequenceActor;
+
+private:
+	UPROPERTY()
+	bool bLastCutsceneWasWin = false;
 
 	// End Actor interface
 };
