@@ -26,9 +26,12 @@ void AOuroborosPlayerController::BeginPlay()
 	if (IsLocalController() && HUDWidgetClass)
 	{
 		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-		if (HUDWidgetInstance)
+		HUDTurnWidgetInstance = CreateWidget<UUserWidget>(this, HUDTurnWidgetClass);\
+
+		if (HUDWidgetInstance && HUDTurnWidgetInstance)
 		{
 			HUDWidgetInstance->AddToViewport();
+			HUDTurnWidgetInstance->AddToViewport();
 	
 		}
 	}
@@ -36,7 +39,8 @@ void AOuroborosPlayerController::BeginPlay()
 
 void AOuroborosPlayerController::OnCutsceneFinished()
 {
-	ShowBlackScreen();
+	ShowBlackScreen(bLastCutsceneWasWin);
+
 	ServerNotifyCutsceneFinished();
 
 	ActiveSequencePlayer = nullptr;
@@ -45,25 +49,33 @@ void AOuroborosPlayerController::OnCutsceneFinished()
 
 void AOuroborosPlayerController::HideHPWidget()
 {
-	if (HUDWidgetInstance)
+	if (HUDWidgetInstance && HUDTurnWidgetInstance)
 	{
 
 		HUDWidgetInstance->RemoveFromParent();
+		HUDTurnWidgetInstance->RemoveFromParent();
 	
 
 		// HUDWidgetInstance->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 
-void AOuroborosPlayerController::ShowBlackScreen()
+void AOuroborosPlayerController::ShowBlackScreen(bool bWin)
 {
-	if (!BlackScreenClass) return;
+	TSubclassOf<UUserWidget> DesiredClass = bWin ? WinBlackScreenClass : LoseBlackScreenClass;
+	if (!DesiredClass) return;
 
-	if (!BlackScreenWidget)
-		BlackScreenWidget = CreateWidget<UUserWidget>(this, BlackScreenClass);
+	UUserWidget*& DesiredWidget = bWin ? (UUserWidget*&)WinBlackScreenWidget : (UUserWidget*&)LoseBlackScreenWidget;
 
-	if (BlackScreenWidget && !BlackScreenWidget->IsInViewport())
-		BlackScreenWidget->AddToViewport(9999);
+	if (!DesiredWidget)
+	{
+		DesiredWidget = CreateWidget<UUserWidget>(this, DesiredClass);
+	}
+
+	if (DesiredWidget && !DesiredWidget->IsInViewport())
+	{
+		DesiredWidget->AddToViewport(9999);
+	}
 }
 
 void AOuroborosPlayerController::ServerNotifyCutsceneFinished_Implementation()
@@ -76,6 +88,8 @@ void AOuroborosPlayerController::ServerNotifyCutsceneFinished_Implementation()
 
 void AOuroborosPlayerController::ClientPlayMatchCutscene_Implementation(bool bWin)
 {
+	bLastCutsceneWasWin = bWin;
+
 	HideHPWidget();
 	SetIgnoreMoveInput(true);
 	SetIgnoreLookInput(true);
@@ -85,6 +99,7 @@ void AOuroborosPlayerController::ClientPlayMatchCutscene_Implementation(bool bWi
 	// 시퀀스가 없으면 그냥 "끝났음" 보고하고 넘어가기
 	if (!Seq)
 	{
+		ShowBlackScreen(bWin);
 		ServerNotifyCutsceneFinished();
 		return;
 	}
@@ -97,6 +112,7 @@ void AOuroborosPlayerController::ClientPlayMatchCutscene_Implementation(bool bWi
 
 	if (!CreatedPlayer)
 	{
+		ShowBlackScreen(bWin);
 		ServerNotifyCutsceneFinished();
 		return;
 	}

@@ -42,14 +42,21 @@ public:
 	void OnCutsceneFinished();
 
 	void HideHPWidget();
-	void ShowBlackScreen();
+	
+	void ShowBlackScreen(bool bWin);
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HUDWidgetClass;   // BP 위젯 클래스 지정용
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> HUDTurnWidgetClass;   
+
 	UPROPERTY()
 	TObjectPtr<UUserWidget> HUDWidgetInstance; // 실제 생성된 위젯 인스턴스
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> HUDTurnWidgetInstance; 
 
 
 	// 에디터에서 지정(Win/Lose 시퀀스)
@@ -60,16 +67,26 @@ public:
 	TObjectPtr<ULevelSequence> LoseSequence;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UUserWidget> BlackScreenClass;
+	TSubclassOf<UUserWidget> WinBlackScreenClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LoseBlackScreenClass;
 
 	UPROPERTY()
-	TObjectPtr<UUserWidget> BlackScreenWidget;
+	TObjectPtr<UUserWidget> WinBlackScreenWidget;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoseBlackScreenWidget;
 
 	UPROPERTY()
 	TObjectPtr<ULevelSequencePlayer> ActiveSequencePlayer;
 
 	UPROPERTY()
 	TObjectPtr<ALevelSequenceActor> ActiveSequenceActor;
+
+private:
+	UPROPERTY()
+	bool bLastCutsceneWasWin = false;
 
 	// End Actor interface
 };
