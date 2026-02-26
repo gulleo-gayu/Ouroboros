@@ -194,8 +194,8 @@ void AOBPlayerState::OnHitStateEnter()
 		// 피격음 재생
 		if ( HitSound != nullptr)
 		{
-			FVector SoundLocation = MyPawn->GetActorLocation(); 
-			UGameplayStatics::PlaySoundAtLocation(this, HitSound, SoundLocation, 1.0f, 1.0f, 0.0f);
+			// HitSoundDelay 시간 뒤에 playdelayedHit함수 실행 (실제 사운드실행은 해당 함수에서)
+			GetWorld()->GetTimerManager().SetTimer(HitSoundTimerHandle, this, &AOBPlayerState::PlayDelayedHitSound, HitSoundDelay, false);
 		}
 		//  캐릭터를 빨간색으로 변경
 		if (AOuroborosCharacter* MyCharacter = Cast<AOuroborosCharacter>(MyPawn))
@@ -230,5 +230,14 @@ void AOBPlayerState::ResetHitState()
 	if (GetPlayerAction() == EPlayerAction::Hit)
 	{
 		SetPlayerAction(EPlayerAction::None);
+	}
+}
+
+void AOBPlayerState::PlayDelayedHitSound()
+{
+	if (APawn* MyPawn = GetPawn())
+	{
+		FVector SoundLocation = MyPawn->GetActorLocation(); 
+		UGameplayStatics::PlaySoundAtLocation(this, HitSound, SoundLocation, 1.0f, 1.0f, 0.0f);
 	}
 }

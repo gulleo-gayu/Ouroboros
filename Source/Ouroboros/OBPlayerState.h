@@ -74,6 +74,10 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float HitDuration = 0.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	float HitSoundDelay = 0.0f;
+
+	FTimerHandle HitSoundTimerHandle;
 	FTimerHandle HitResetTimerHandle;
 
 	UFUNCTION()
@@ -97,6 +101,7 @@ protected:
 	void OnInteractStateEnter();
 
 	void ResetHitState();
+	void PlayDelayedHitSound();			
 private:
 
 };
