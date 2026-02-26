@@ -84,6 +84,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	USoundAttenuation* FootstepAttenuation;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	float LocalFootstepVolume = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	float RemoteFootstepVolume = 1.2f;
+	
 	// 캐릭터를 구성하는 매터리얼을 담을 배열
 	UPROPERTY()
 	TArray<UMaterialInstanceDynamic*> DynamicMatInstances;
